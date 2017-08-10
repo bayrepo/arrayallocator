@@ -1,0 +1,15 @@
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
+SET(CMAKE_VERBOSE_MAKEFILE ON)
+
+PROJECT("runtests")
+
+ADD_SUBDIRECTORY(suites)
+
+SET(CMAKE_C_FLAGS " -std=c99 -O0 -Wall -Wextra -Wimplicit")
+
+INCLUDE_DIRECTORIES ( "/usr/include" "${CMAKE_SOURCE_DIR}/../includes" )
+ADD_EXECUTABLE(runtests main.c utils.c)
+TARGET_LINK_LIBRARIES(runtests cunit dl)
+
+ADD_CUSTOM_TARGET(unit-test COMMAND ${PROJECT_NAME})
+
