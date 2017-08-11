@@ -331,30 +331,35 @@ void brp_free_1(void *storage, void *ptr) {
 // если новый размер меньше прежнего, то данные из старого урезаются
 // storage указатель на хранилище
 void *brp_realloc_1(void *storage, void *ptr, long new_size) {
-	if (!ptr)
-		return NULL;
 	lock();
-	char *try_to_check_info = ptr - sizeof(dataChunk);
-	if (try_to_check_info < ((char *) storage + sizeof(globalDataStorage))) {
-		fprintf(stderr, "%p corrupted, out of storage\n", ptr);
-	}
-	dataChunk *ch_ptr = (dataChunk *) try_to_check_info;
-	if (brp_set_is_sign(ch_ptr)) {
-		if (ch_ptr->status == C_FREE) {
-			fprintf(stderr, "%p is freed earlier\n", ptr);
-		} else {
-			void *new_ptr = brp_malloc_internal(storage, new_size, 0);
-			if (new_ptr) {
-				long copy_size =
-						(ch_ptr->size < new_size) ? ch_ptr->size : new_size;
-				brp_mem_cpy((char *) ptr, (char *) new_ptr, copy_size);
-				brp_free_internal(storage, ptr, 0);
-				unlock();
-				return new_ptr;
-			}
-		}
+	if (!ptr) {
+		void *new_ptr = brp_malloc_internal(storage, new_size, 0);
+		unlock();
+		return new_ptr;
 	} else {
-		fprintf(stderr, "%p is garbage\n", ptr);
+		char *try_to_check_info = ptr - sizeof(dataChunk);
+		if (try_to_check_info
+				< ((char *) storage + sizeof(globalDataStorage))) {
+			fprintf(stderr, "%p corrupted, out of storage\n", ptr);
+		}
+		dataChunk *ch_ptr = (dataChunk *) try_to_check_info;
+		if (brp_set_is_sign(ch_ptr)) {
+			if (ch_ptr->status == C_FREE) {
+				fprintf(stderr, "%p is freed earlier\n", ptr);
+			} else {
+				void *new_ptr = brp_malloc_internal(storage, new_size, 0);
+				if (new_ptr) {
+					long copy_size =
+							(ch_ptr->size < new_size) ? ch_ptr->size : new_size;
+					brp_mem_cpy((char *) ptr, (char *) new_ptr, copy_size);
+					brp_free_internal(storage, ptr, 0);
+					unlock();
+					return new_ptr;
+				}
+			}
+		} else {
+			fprintf(stderr, "%p is garbage\n", ptr);
+		}
 	}
 	unlock();
 	return NULL;
@@ -420,30 +425,35 @@ void brp_free_null_1(void *storage, void *ptr) {
 // функция подобна realloc, но с обнулением освобожденного участка
 // и с обнулением нового перед копированием
 void *brp_realloc_null_1(void *storage, void *ptr, long new_size) {
-	if (!ptr)
-		return NULL;
 	lock();
-	char *try_to_check_info = ptr - sizeof(dataChunk);
-	if (try_to_check_info < ((char *) storage + sizeof(globalDataStorage))) {
-		fprintf(stderr, "%p corrupted, out of storage\n", ptr);
-	}
-	dataChunk *ch_ptr = (dataChunk *) try_to_check_info;
-	if (brp_set_is_sign(ch_ptr)) {
-		if (ch_ptr->status == C_FREE) {
-			fprintf(stderr, "%p is freed earlier\n", ptr);
-		} else {
-			void *new_ptr = brp_calloc_internal(storage, 1, new_size, 0);
-			if (new_ptr) {
-				long copy_size =
-						(ch_ptr->size < new_size) ? ch_ptr->size : new_size;
-				brp_mem_cpy((char *) ptr, (char *) new_ptr, copy_size);
-				brp_free_null_internal(storage, ptr, 0);
-				unlock();
-				return new_ptr;
-			}
-		}
+	if (!ptr) {
+		void *new_ptr = brp_calloc_internal(storage, 1, new_size, 0);
+		unlock();
+		return new_ptr;
 	} else {
-		fprintf(stderr, "%p is garbage\n", ptr);
+		char *try_to_check_info = ptr - sizeof(dataChunk);
+		if (try_to_check_info
+				< ((char *) storage + sizeof(globalDataStorage))) {
+			fprintf(stderr, "%p corrupted, out of storage\n", ptr);
+		}
+		dataChunk *ch_ptr = (dataChunk *) try_to_check_info;
+		if (brp_set_is_sign(ch_ptr)) {
+			if (ch_ptr->status == C_FREE) {
+				fprintf(stderr, "%p is freed earlier\n", ptr);
+			} else {
+				void *new_ptr = brp_calloc_internal(storage, 1, new_size, 0);
+				if (new_ptr) {
+					long copy_size =
+							(ch_ptr->size < new_size) ? ch_ptr->size : new_size;
+					brp_mem_cpy((char *) ptr, (char *) new_ptr, copy_size);
+					brp_free_null_internal(storage, ptr, 0);
+					unlock();
+					return new_ptr;
+				}
+			}
+		} else {
+			fprintf(stderr, "%p is garbage\n", ptr);
+		}
 	}
 	unlock();
 	return NULL;
@@ -643,7 +653,7 @@ void *brp_get_pointer_with_number_1(void *storage, int pointer_number) {
 	lock();
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
 	if (ds->pointers_table && (pointer_number < ds->max_number_of_pointers)) {
-		void **ptr = (void **)ds->pointers_table + pointer_number;
+		void **ptr = (void **) ds->pointers_table + pointer_number;
 		unlock();
 		return *ptr;
 	}
@@ -655,7 +665,7 @@ void brp_set_pointer_to_number_1(void *storage, int pointer_number, void *value)
 	lock();
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
 	if (ds->pointers_table && (pointer_number < ds->max_number_of_pointers)) {
-		void **ptr = (void **)ds->pointers_table + pointer_number;
+		void **ptr = (void **) ds->pointers_table + pointer_number;
 		*ptr = value;
 	}
 	unlock();

@@ -12,8 +12,8 @@
 
 int brp_malloc_init(void *array_ptr, long array_size) {
 	int allocalg = 0;
-	if (!strcmp(getenv("ALLOCALG"), "SBRK")
-			|| !strcmp(getenv("ALLOCALG"), "sbrk")) {
+	if (!strcmp(getenv("ALLOCALG") ? getenv("ALLOCALG") : "", "SBRK")
+			|| !strcmp(getenv("ALLOCALG") ? getenv("ALLOCALG") : "", "sbrk")) {
 		allocalg = 0;
 	}
 	switch (allocalg) {

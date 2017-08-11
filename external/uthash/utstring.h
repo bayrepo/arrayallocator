@@ -84,7 +84,7 @@ do {                                                       \
 
 #define utstring_new(s, strg)                                    \
 do {                                                       \
-   s = (UT_string*)brp_calloc(strg, sizeof(UT_string),1);            \
+   s = (UT_string*)brp_calloc(strg, 1, sizeof(UT_string));            \
    if (!s) oom();                                          \
    (s)->storage = strg;                                 \
    utstring_init(s);                                       \

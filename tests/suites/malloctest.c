@@ -118,6 +118,8 @@ TEST_FUNCT(brp_realloc_1) {
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr_copy);
 	CU_ASSERT_STRING_EQUAL(ptr_copy, "TEST");
 	CU_ASSERT_NOT_EQUAL(ptr, ptr_copy);
+	char *ptr_copy_2 = (char *) brp_realloc_1(testdata, (void *) NULL, 30);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr_copy_2);
 }
 
 TEST_FUNCT(brp_realloc_big_small_1) {
