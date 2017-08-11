@@ -25,7 +25,7 @@ typedef struct __attribute__((__packed__)) __globalDataStorage {
 	int sign;
 	long array_size;
 	void *next_elem;
-	void *pointers_table;
+	void **pointers_table;
 	long max_number_of_pointers;
 } globalDataStorage;
 

@@ -297,6 +297,8 @@ void *brp_malloc_1(void *storage, long size) {
 // ptr - указатель на блок
 // storage указатель на хранилище
 static void brp_free_internal(void *storage, void *ptr, int need_lock) {
+	if (!ptr)
+		return;
 	if (need_lock) {
 		lock();
 	}
@@ -329,6 +331,8 @@ void brp_free_1(void *storage, void *ptr) {
 // если новый размер меньше прежнего, то данные из старого урезаются
 // storage указатель на хранилище
 void *brp_realloc_1(void *storage, void *ptr, long new_size) {
+	if (!ptr)
+		return NULL;
 	lock();
 	char *try_to_check_info = ptr - sizeof(dataChunk);
 	if (try_to_check_info < ((char *) storage + sizeof(globalDataStorage))) {
@@ -380,6 +384,8 @@ void *brp_calloc_1(void *storage, int elem_numbers, int elem_size) {
 
 // функция аналогична free, но с обнулением освободившегося участка
 static void brp_free_null_internal(void *storage, void *ptr, int need_lock) {
+	if (!ptr)
+		return;
 	if (need_lock) {
 		lock();
 	}
@@ -414,6 +420,8 @@ void brp_free_null_1(void *storage, void *ptr) {
 // функция подобна realloc, но с обнулением освобожденного участка
 // и с обнулением нового перед копированием
 void *brp_realloc_null_1(void *storage, void *ptr, long new_size) {
+	if (!ptr)
+		return NULL;
 	lock();
 	char *try_to_check_info = ptr - sizeof(dataChunk);
 	if (try_to_check_info < ((char *) storage + sizeof(globalDataStorage))) {
@@ -514,14 +522,15 @@ void brp_return_allocation_picture_1(void *storage, char *buffer_for_picture,
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
 	dataChunk *first_ptr = NULL;
 	dataChunk *next_ptr = NULL;
-	brp_get_next_region_info_internal(storage, NULL, &first_ptr, 0);
+	brp_get_next_region_info_internal(storage, NULL, (void **) &first_ptr, 0);
 	while (next_ptr != first_ptr) {
 		if (!next_ptr) {
 			next_ptr = first_ptr;
 		}
 		buffer_for_picture[index] = next_ptr->status;
 		brp_get_next_region_info_internal(storage,
-				(void *) ((char *) next_ptr + sizeof(dataChunk)), &next_ptr, 0);
+				(void *) ((char *) next_ptr + sizeof(dataChunk)),
+				(void **) &next_ptr, 0);
 		index++;
 		if (index >= (size - 2)) {
 			break;
@@ -540,7 +549,7 @@ void brp_return_allocation_stdout_1(void *storage) {
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
 	dataChunk *first_ptr = NULL;
 	dataChunk *next_ptr = NULL;
-	brp_get_next_region_info_internal(storage, NULL, &first_ptr, 0);
+	brp_get_next_region_info_internal(storage, NULL, (void *) &first_ptr, 0);
 	long sum_size = 0;
 	long chunk_size = 0;
 	while (next_ptr != first_ptr) {
@@ -553,7 +562,8 @@ void brp_return_allocation_stdout_1(void *storage) {
 		sum_size += next_ptr->size;
 		chunk_size += next_ptr->size + sizeof(dataChunk);
 		brp_get_next_region_info_internal(storage,
-				(void *) ((char *) next_ptr + sizeof(dataChunk)), &next_ptr, 0);
+				(void *) ((char *) next_ptr + sizeof(dataChunk)),
+				(void *) &next_ptr, 0);
 		index++;
 	}
 	printf("----> SIZE %d DIRTY %d\n", sum_size,
@@ -617,8 +627,8 @@ int brp_make_pointers_table_1(void *storage, int pointers_number) {
 	lock();
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
 	if (!ds->pointers_table) {
-		ds->pointers_table = brp_calloc_internal(storage, pointers_number,
-				sizeof(void *), 0);
+		ds->pointers_table = (void *) brp_calloc_internal(storage,
+				pointers_number, sizeof(void *), 0);
 		if (!ds->pointers_table) {
 			unlock();
 			return 1;
@@ -633,9 +643,9 @@ void *brp_get_pointer_with_number_1(void *storage, int pointer_number) {
 	lock();
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
 	if (ds->pointers_table && (pointer_number < ds->max_number_of_pointers)) {
-		void *ptr = ds->pointers_table[pointer_number];
+		void **ptr = (void **)ds->pointers_table + pointer_number;
 		unlock();
-		return ptr;
+		return *ptr;
 	}
 	unlock();
 	return NULL;
@@ -645,7 +655,8 @@ void brp_set_pointer_to_number_1(void *storage, int pointer_number, void *value)
 	lock();
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
 	if (ds->pointers_table && (pointer_number < ds->max_number_of_pointers)) {
-		ds->pointers_table[pointer_number] = value;
+		void **ptr = (void **)ds->pointers_table + pointer_number;
+		*ptr = value;
 	}
 	unlock();
 }

@@ -9,7 +9,8 @@ ENDMACRO(ADD_MODULE file)
 
 FILE(GLOB C_FILES RELATIVE "${CMAKE_SOURCE_DIR}/tests/suites" "${CMAKE_SOURCE_DIR}/tests/suites/*.c")
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/../../includes" "${CMAKE_CURRENT_SOURCE_DIR}/../")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/../../includes" 
+"${CMAKE_CURRENT_SOURCE_DIR}/../" ${CMAKE_CURRENT_SOURCE_DIR}/../../external/uthash)
 
 MESSAGE(STATUS "FFF: ${CMAKE_CURRENT_SOURCE_DIR}")
 

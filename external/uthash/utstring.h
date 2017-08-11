@@ -320,7 +320,7 @@ const char *P_Needle, size_t P_NeedleLen) {
 	}
 	V_HaystackLen = V_StartPosition + 1;
 	if ((V_HaystackLen >= (long) P_NeedleLen) && (P_NeedleLen > 0)) {
-		V_KMP_Table = (long *) malloc(s->storage,
+		V_KMP_Table = (long *) brp_malloc(s->storage,
 				sizeof(long) * (P_NeedleLen + 1));
 		if (V_KMP_Table != NULL) {
 			_utstring_BuildTableR(P_Needle, P_NeedleLen, V_KMP_Table);
@@ -328,7 +328,7 @@ const char *P_Needle, size_t P_NeedleLen) {
 			V_FindPosition = _utstring_findR(s->d, V_HaystackLen, P_Needle,
 					P_NeedleLen, V_KMP_Table);
 
-			free(s->storage, V_KMP_Table);
+			brp_free(s->storage, V_KMP_Table);
 		}
 	}
 

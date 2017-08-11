@@ -8,20 +8,20 @@
 
 TEST_FUNCT(brp_malloc_init_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	CU_ASSERT_PTR_NULL(brp_get_next_elem_1((void * )testdata));
 }
 
 TEST_FUNCT(brp_malloc_init_small_1) {
 	char small_test_data[sizeof(globalDataStorage) - 1] = { 0 };
 	CU_ASSERT_EQUAL(
-			brp_malloc_init_1(small_test_data, (sizeof(globalDataStorage) - 1)),
-			-1);
+			brp_malloc_init_1(small_test_data, (sizeof(globalDataStorage) - 1),
+					0), -1);
 }
 
 TEST_FUNCT(brp_malloc_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	CU_ASSERT_PTR_NULL(brp_get_next_elem_1((void * )testdata));
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL(ptr);
@@ -31,11 +31,11 @@ TEST_FUNCT(brp_malloc_1) {
 TEST_FUNCT(brp_malloc_reinit_1) {
 	char testdata[1000] = { 0 };
 	char alloc_buffer[100] = { 0 };
-	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	CU_ASSERT_PTR_NULL(brp_get_next_elem_1((void * )testdata));
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL(ptr);
-	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 500), 0);
+	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 500, 0), 0);
 	ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	brp_return_allocation_picture_1((void *) testdata, alloc_buffer, 100);
 	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UUF");
@@ -45,15 +45,16 @@ TEST_FUNCT(brp_free_1) {
 	char testdata[1000] = { 0 };
 	dataChunk *chunk = NULL;
 	char alloc_buffer[100] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	CU_ASSERT_PTR_NULL_FATAL(brp_get_next_elem_1(testdata));
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(brp_get_next_elem_1((void * )testdata));
-	char *area = brp_get_next_region_info_1((void *) testdata, NULL, &chunk);
+	char *area = (char *) brp_get_next_region_info_1((void *) testdata, NULL,
+			(void **) &chunk);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(area);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(chunk);
 	CU_ASSERT_FATAL(
-			(chunk->sign[0] == C_SIGN_0) && (chunk->sign[1] == C_SIGN_0));
+			(chunk->sign[0] == C_SIGN_0) && (chunk->sign[1] == C_SIGN_1));
 	brp_return_allocation_picture_1((void *) testdata, alloc_buffer, 100);
 	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UF");
 	strcpy(ptr, "TEST");
@@ -67,7 +68,7 @@ TEST_FUNCT(brp_free_1) {
 
 TEST_FUNCT(brp_malloc_size_1) {
 	char testdata[1000] = { 0 };
-	brp_malloc_init_1(testdata, 1000);
+	brp_malloc_init_1(testdata, 1000, 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_EQUAL(brp_get_free_1((void * )testdata),
 			1000 - sizeof(globalDataStorage) - sizeof(dataChunk)
@@ -84,13 +85,14 @@ TEST_FUNCT(brp_malloc_malloc_free_large_1) {
 	char testdata[1000] = { 0 };
 	dataChunk *chunk = NULL;
 	char alloc_buffer[100] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	CU_ASSERT_PTR_NULL_FATAL(brp_get_next_elem_1((void * )testdata));
 	char *ptr = (char *) brp_malloc_1((void *) testdata,
 			1000 - sizeof(globalDataStorage) - sizeof(dataChunk));
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(brp_get_next_elem_1((void * )testdata));
-	char *area = brp_get_next_region_info_1((void *) testdata, NULL, &chunk);
+	char *area = (char *) brp_get_next_region_info_1((void *) testdata, NULL,
+			(void **) &chunk);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(area);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(chunk);
 	CU_ASSERT_FATAL(
@@ -108,7 +110,7 @@ TEST_FUNCT(brp_malloc_malloc_free_large_1) {
 
 TEST_FUNCT(brp_realloc_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	strcpy(ptr, "TEST");
@@ -121,7 +123,7 @@ TEST_FUNCT(brp_realloc_1) {
 TEST_FUNCT(brp_realloc_big_small_1) {
 	char testdata[1000] = { 0 };
 	char alloc_buffer[100] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	strcpy(ptr, "TESTTEST");
@@ -142,7 +144,7 @@ TEST_FUNCT(brp_realloc_big_small_1) {
 
 TEST_FUNCT(brp_calloc_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_calloc_1((void *) testdata, 100, 1);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	long sum = 0;
@@ -155,7 +157,7 @@ TEST_FUNCT(brp_calloc_1) {
 
 TEST_FUNCT(brp_free_null_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_calloc_1((void *) testdata, 100, 1);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	int index = 0;
@@ -172,7 +174,7 @@ TEST_FUNCT(brp_free_null_1) {
 
 TEST_FUNCT(brp_realloc_null_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	strcpy(ptr, "TEST");
@@ -196,16 +198,18 @@ TEST_FUNCT(brp_realloc_null_1) {
 TEST_FUNCT(brp_get_next_region_info_1) {
 	char testdata[1000] = { 0 };
 	dataChunk *chunk = NULL;
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
-	char *area = brp_get_next_region_info_1((void *) testdata, NULL, &chunk);
+	char *area = (char *) brp_get_next_region_info_1((void *) testdata, NULL,
+			(void **) &chunk);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(area);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(chunk);
 	CU_ASSERT_EQUAL(chunk->size, 10);
 	char *ptr_new = (char *) brp_malloc_1((void *) testdata, 50);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr_new);
-	area = brp_get_next_region_info_1((void *) testdata, ptr, &chunk);
+	area = (char *) brp_get_next_region_info_1((void *) testdata, ptr,
+			(void **) &chunk);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(area);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(chunk);
 	CU_ASSERT_EQUAL(chunk->size, 50);
@@ -214,17 +218,17 @@ TEST_FUNCT(brp_get_next_region_info_1) {
 TEST_FUNCT(brp_get_next_elem_1) {
 	char testdata[1000] = { 0 };
 	dataChunk *chunk = NULL;
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	CU_ASSERT_PTR_NULL(brp_get_next_elem_1(testdata));
-	char *ptr = (char *) brp_malloc((void *) testdata, 10);
-	CU_ASSERT_PTR_NOT_NULL(brp_get_next_elem_1(testdata));
+	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
+	CU_ASSERT_PTR_NOT_NULL(brp_get_next_elem_1((void * )testdata));
 	CU_ASSERT_EQUAL(((char * )ptr + 10), brp_get_next_elem_1(testdata));
 }
 
 TEST_FUNCT(brp_get_free_1) {
 	char testdata[1000] = { 0 };
 	dataChunk *chunk = NULL;
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_EQUAL(
 			(1000 - sizeof(globalDataStorage) - sizeof(dataChunk)
@@ -235,7 +239,7 @@ TEST_FUNCT(brp_get_free_1) {
 TEST_FUNCT(brp_get_inuse_1) {
 	char testdata[1000] = { 0 };
 	dataChunk *chunk = NULL;
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_EQUAL(10, brp_get_inuse_1(testdata));
 }
@@ -243,7 +247,7 @@ TEST_FUNCT(brp_get_inuse_1) {
 TEST_FUNCT(brp_return_allocation_picture_1) {
 	char testdata[1000] = { 0 };
 	char alloc_buffer[4] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	ptr = (char *) brp_malloc_1((void *) testdata, 10);
@@ -258,13 +262,17 @@ TEST_FUNCT(brp_return_allocation_picture_1) {
 
 // Проверка ситуации, когда закончилась память в массиве
 TEST_FUNCT(brp_check_cannot_allocate_1) {
-	char testdata[100] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 100), 0);
+	char testdata[4 * (sizeof(dataChunk) + 10) + sizeof(globalDataStorage)] = {
+			0 };
+	CU_ASSERT_EQUAL_FATAL(
+			brp_malloc_init_1(testdata,
+					4 * (sizeof(dataChunk) + 10) + sizeof(globalDataStorage),
+					0), 0);
 	char *ptr = NULL;
 	char *ptr_2 = NULL;
 	char *ptr_last = NULL;
 	int index = 0;
-	int number = (100 - sizeof(globalDataStorage)) / (sizeof(dataChunk) + 10);
+	int number = 4;
 	for (index = 0; index < (number + 1); index++) {
 		ptr = (char *) brp_malloc_1((void *) testdata, 10);
 		if (index == 1) {
@@ -292,14 +300,18 @@ TEST_FUNCT(brp_check_cannot_allocate_1) {
 
 //Проверка склейки двух маленьких областей в одну болшую
 TEST_FUNCT(brp_check_concat_1) {
-	char testdata[100] = { 0 };
+	char testdata[4 * (sizeof(dataChunk) + 10) + sizeof(globalDataStorage)] = {
+			0 };
 	char alloc_buffer[100] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 100), 0);
+	CU_ASSERT_EQUAL_FATAL(
+			brp_malloc_init_1(testdata,
+					4 * (sizeof(dataChunk) + 10) + sizeof(globalDataStorage),
+					0), 0);
 	char *ptr = NULL;
 	char *ptr_last = NULL;
 	char *ptr_pre_last = NULL;
 	int index = 0;
-	int number = (100 - sizeof(globalDataStorage)) / (sizeof(dataChunk) + 10);
+	int number = 4;
 	for (index = 0; index < number; index++) {
 		ptr = (char *) brp_malloc_1((void *) testdata, 10);
 		if (index == (number - 1)) {
@@ -330,14 +342,14 @@ TEST_FUNCT(brp_check_concat_1) {
 
 TEST_FUNCT(brp_make_pointers_table_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
-	CU_ASSERT_EQUAL(brp_make_pointers_table_1(20), 0)
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
+	CU_ASSERT_EQUAL(brp_make_pointers_table_1((void * )testdata, 20), 0)
 }
 
 TEST_FUNCT(brp_pointers_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
-	CU_ASSERT_EQUAL_FATAL(brp_make_pointers_table_1(20), 0)
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_make_pointers_table_1((void * )testdata, 20), 0)
 	brp_set_pointer_to_number_1((void *) testdata, 0, (void *) 1);
 	brp_set_pointer_to_number_1((void *) testdata, 1, (void *) 10);
 	brp_set_pointer_to_number_1((void *) testdata, 5, (void *) 100);
@@ -354,19 +366,19 @@ TEST_FUNCT(brp_pointers_1) {
 
 TEST_FUNCT(brp_recreate_pointers_table_1) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
-	CU_ASSERT_EQUAL_FATAL(brp_make_pointers_table_1(20), 0)
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_make_pointers_table_1((void * )testdata, 20), 0)
 	brp_set_pointer_to_number_1((void *) testdata, 0, (void *) 1);
 	CU_ASSERT_EQUAL((long )brp_get_pointer_with_number_1((void * )testdata, 0),
 			1)
-	CU_ASSERT_EQUAL(brp_make_pointers_table_1(30), 0)
+	CU_ASSERT_EQUAL(brp_make_pointers_table_1((void * )testdata, 30), 0)
 	CU_ASSERT_EQUAL((long )brp_get_pointer_with_number_1((void * )testdata, 0),
 			1)
 }
 
 TEST_FUNCT(brp_strdup) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *test = "TESTTESTTESTTEST";
 	char *result = brp_strdup((void *) testdata, test);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(result);
@@ -375,7 +387,7 @@ TEST_FUNCT(brp_strdup) {
 
 TEST_FUNCT(brp_strndup) {
 	char testdata[1000] = { 0 };
-	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_EQUAL_FATAL(brp_malloc_init_1(testdata, 1000, 0), 0);
 	char *test = "TESTTESTTESTTEST";
 	char *result = brp_strndup((void *) testdata, test, 100);
 	CU_ASSERT_PTR_NOT_NULL_FATAL(result);
