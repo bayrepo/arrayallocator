@@ -44,11 +44,11 @@ typedef struct {
 	void *storage;
 } UT_ringbuffer;
 
-#define utringbuffer_init(a, _n, _icd, storage) do {                               \
+#define utringbuffer_init(a, _n, _icd, strg) do {                               \
   memset(a, 0, sizeof(UT_ringbuffer));                                    \
   (a)->icd = *(_icd);                                                     \
   (a)->n = (_n);                                                          \
-  (a)->storage = storage;                                                 \
+  (a)->storage = strg;                                                 \
   if ((a)->n) { (a)->d = (char*)brp_malloc((a)->storage, (a)->n * (_icd)->sz); }            \
 } while(0)
 
@@ -76,9 +76,9 @@ typedef struct {
   (a)->n = 0;                                                             \
 } while(0)
 
-#define utringbuffer_new(a,n,_icd, storage) do {                                   \
-  a = (UT_ringbuffer*)brp_malloc(storage, sizeof(UT_ringbuffer));                      \
-  utringbuffer_init(a, n, _icd, storage);                                          \
+#define utringbuffer_new(a,n,_icd, strg) do {                                   \
+  a = (UT_ringbuffer*)brp_malloc(strg, sizeof(UT_ringbuffer));                      \
+  utringbuffer_init(a, n, _icd, strg);                                          \
 } while(0)
 
 #define utringbuffer_free(a) do {                                         \

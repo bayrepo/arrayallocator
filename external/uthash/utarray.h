@@ -61,10 +61,10 @@ typedef struct {
 	void *storage;
 } UT_array;
 
-#define utarray_init(a,_icd, storage) do {                                             \
+#define utarray_init(a,_icd, strg) do {                                             \
   memset(a,0,sizeof(UT_array));                                               \
   (a)->icd = *(_icd);                                                         \
-  (a)->storage = storage                                                      \
+  (a)->storage = strg;                                                      \
 } while(0)
 
 #define utarray_done(a) do {                                                  \
@@ -72,7 +72,7 @@ typedef struct {
     if ((a)->icd.dtor) {                                                      \
       unsigned _ut_i;                                                         \
       for(_ut_i=0; _ut_i < (a)->i; _ut_i++) {                                 \
-        (a)->icd.dtor(utarray_eltptr(a,_ut_i));                               \
+        (a)->icd.dtor(utarray_eltptr(a,_ut_i), (a)->storage);                               \
       }                                                                       \
     }                                                                         \
     brp_free((a)->storage, (a)->d);                                                             \
@@ -80,10 +80,10 @@ typedef struct {
   (a)->n=0;                                                                   \
 } while(0)
 
-#define utarray_new(a,_icd, storage) do {                                              \
-  (a) = (UT_array*)brp_malloc(storage, sizeof(UT_array));                                  \
+#define utarray_new(a,_icd, strg) do {                                              \
+  (a) = (UT_array*)brp_malloc(strg, sizeof(UT_array));                                  \
   if ((a) == NULL) oom();                                                     \
-  utarray_init(a,_icd, storage);                                                       \
+  utarray_init(a,_icd, strg);                                                       \
 } while(0)
 
 #define utarray_free(a) do {                                                  \

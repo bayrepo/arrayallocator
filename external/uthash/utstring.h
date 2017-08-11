@@ -82,11 +82,11 @@ do {                                                       \
   brp_free((s)->storage, s);                                                 \
 } while(0)
 
-#define utstring_new(s, storage)                                    \
+#define utstring_new(s, strg)                                    \
 do {                                                       \
-   s = (UT_string*)brp_calloc(storage, sizeof(UT_string),1);            \
+   s = (UT_string*)brp_calloc(strg, sizeof(UT_string),1);            \
    if (!s) oom();                                          \
-   (s)->storage = storage;                                 \
+   (s)->storage = strg;                                 \
    utstring_init(s);                                       \
 } while(0)
 

@@ -1,7 +1,6 @@
 #ifndef __BAYREPOMALLOC_H__
 #define __BAYREPOMALLOC_H__
 
-
 //Эти функции должны присуствовать во всех алгоритмах
 int brp_malloc_init(void *array_ptr, long array_size);
 void *brp_malloc(void *storage, long size);

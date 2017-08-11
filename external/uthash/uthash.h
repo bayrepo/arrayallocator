@@ -85,10 +85,10 @@ typedef unsigned char uint8_t;
 #define uthash_fatal(msg) exit(-1)        /* fatal error (out of memory,etc) */
 #endif
 #ifndef uthash_malloc
-#define uthash_malloc(storage, sz) brp_malloc(storage, sz)      /* malloc fcn                      */
+#define uthash_malloc(strg, sz) brp_malloc(strg, sz)      /* malloc fcn                      */
 #endif
 #ifndef uthash_free
-#define uthash_free(storage, ptr,sz) brp_free(storage, ptr)     /* free fcn                        */
+#define uthash_free(strg, ptr,sz) brp_free(strg, ptr)     /* free fcn                        */
 #endif
 #ifndef uthash_bzero
 #define uthash_bzero(a,n) memset(a,'\0',n)
@@ -144,10 +144,11 @@ do {                                                                            
 #ifdef HASH_BLOOM
 #define HASH_BLOOM_BITLEN (1UL << HASH_BLOOM)
 #define HASH_BLOOM_BYTELEN (HASH_BLOOM_BITLEN/8UL) + (((HASH_BLOOM_BITLEN%8UL)!=0UL) ? 1UL : 0UL)
-#define HASH_BLOOM_MAKE(tbl)                                                     \
+#define HASH_BLOOM_MAKE(tbl, strg)                                                     \
 do {                                                                             \
+  (tbl)->storage = strg;                                                      \
   (tbl)->bloom_nbits = HASH_BLOOM;                                               \
-  (tbl)->bloom_bv = (uint8_t*)uthash_malloc(HASH_BLOOM_BYTELEN);                 \
+  (tbl)->bloom_bv = (uint8_t*)uthash_malloc((tbl)->storage, HASH_BLOOM_BYTELEN);                 \
   if (!(tbl)->bloom_bv) {                                                        \
     uthash_fatal("out of memory");                                               \
   }                                                                              \
@@ -157,7 +158,7 @@ do {                                                                            
 
 #define HASH_BLOOM_FREE(tbl)                                                     \
 do {                                                                             \
-  uthash_free((tbl)->bloom_bv, HASH_BLOOM_BYTELEN);                              \
+  uthash_free((tbl)->storage, (tbl)->bloom_bv, HASH_BLOOM_BYTELEN);                              \
 } while (0)
 
 #define HASH_BLOOM_BITSET(bv,idx) (bv[(idx)/8U] |= (1U << ((idx)%8U)))
@@ -170,16 +171,17 @@ do {                                                                            
   HASH_BLOOM_BITTEST((tbl)->bloom_bv, (hashv & (uint32_t)((1UL << (tbl)->bloom_nbits) - 1U)))
 
 #else
-#define HASH_BLOOM_MAKE(tbl)
+#define HASH_BLOOM_MAKE(tbl, strg)
 #define HASH_BLOOM_FREE(tbl)
 #define HASH_BLOOM_ADD(tbl,hashv)
 #define HASH_BLOOM_TEST(tbl,hashv) (1)
 #define HASH_BLOOM_BYTELEN 0U
 #endif
 
-#define HASH_MAKE_TABLE(hh,head)                                                 \
+#define HASH_MAKE_TABLE(hh,head,strg)                                                 \
 do {                                                                             \
-  (head)->hh.tbl = (UT_hash_table*)uthash_malloc(sizeof(UT_hash_table));         \
+  (head)->hh.tbl->storage = strg   ;                                              \
+  (head)->hh.tbl = (UT_hash_table*)uthash_malloc((head)->hh.tbl->storage, sizeof(UT_hash_table));         \
   if (!(head)->hh.tbl) {                                                         \
     uthash_fatal("out of memory");                                               \
   }                                                                              \
@@ -188,14 +190,14 @@ do {                                                                            
   (head)->hh.tbl->num_buckets = HASH_INITIAL_NUM_BUCKETS;                        \
   (head)->hh.tbl->log2_num_buckets = HASH_INITIAL_NUM_BUCKETS_LOG2;              \
   (head)->hh.tbl->hho = (char*)(&(head)->hh) - (char*)(head);                    \
-  (head)->hh.tbl->buckets = (UT_hash_bucket*)uthash_malloc(                      \
+  (head)->hh.tbl->buckets = (UT_hash_bucket*)uthash_malloc((head)->hh.tbl->storage,                      \
       HASH_INITIAL_NUM_BUCKETS * sizeof(struct UT_hash_bucket));                 \
   if (!(head)->hh.tbl->buckets) {                                                \
     uthash_fatal("out of memory");                                               \
   }                                                                              \
   uthash_bzero((head)->hh.tbl->buckets,                                          \
       HASH_INITIAL_NUM_BUCKETS * sizeof(struct UT_hash_bucket));                 \
-  HASH_BLOOM_MAKE((head)->hh.tbl);                                               \
+  HASH_BLOOM_MAKE((head)->hh.tbl, (head)->hh.tbl->storage);                                               \
   (head)->hh.tbl->signature = HASH_SIGNATURE;                                    \
 } while (0)
 
@@ -266,7 +268,7 @@ do {                                                                            
 } while (0)
 #endif
 
-#define HASH_ADD_KEYPTR_BYHASHVALUE_INORDER(hh,head,keyptr,keylen_in,hashval,add,cmpfcn) \
+#define HASH_ADD_KEYPTR_BYHASHVALUE_INORDER(hh,head,keyptr,keylen_in,hashval,add,cmpfcn,strg) \
 do {                                                                             \
   unsigned _ha_bkt;                                                              \
   (add)->hh.hashv = (hashval);                                                   \
@@ -276,7 +278,7 @@ do {                                                                            
     (add)->hh.next = NULL;                                                       \
     (add)->hh.prev = NULL;                                                       \
     (head) = (add);                                                              \
-    HASH_MAKE_TABLE(hh, head);                                                   \
+    HASH_MAKE_TABLE(hh, head, strg);                                                   \
   } else {                                                                       \
     void *_hs_iter = (head);                                                     \
     (add)->hh.tbl = (head)->hh.tbl;                                              \
@@ -301,20 +303,20 @@ do {                                                                            
   HASH_FSCK(hh, head, "HASH_ADD_KEYPTR_BYHASHVALUE_INORDER");                    \
 } while (0)
 
-#define HASH_ADD_KEYPTR_INORDER(hh,head,keyptr,keylen_in,add,cmpfcn)             \
+#define HASH_ADD_KEYPTR_INORDER(hh,head,keyptr,keylen_in,add,cmpfcn,strg)             \
 do {                                                                             \
   unsigned _hs_hashv;                                                            \
   HASH_VALUE(keyptr, keylen_in, _hs_hashv);                                      \
-  HASH_ADD_KEYPTR_BYHASHVALUE_INORDER(hh, head, keyptr, keylen_in, _hs_hashv, add, cmpfcn); \
+  HASH_ADD_KEYPTR_BYHASHVALUE_INORDER(hh, head, keyptr, keylen_in, _hs_hashv, add, cmpfcn, strg); \
 } while (0)
 
-#define HASH_ADD_BYHASHVALUE_INORDER(hh,head,fieldname,keylen_in,hashval,add,cmpfcn) \
-  HASH_ADD_KEYPTR_BYHASHVALUE_INORDER(hh, head, &((add)->fieldname), keylen_in, hashval, add, cmpfcn)
+#define HASH_ADD_BYHASHVALUE_INORDER(hh,head,fieldname,keylen_in,hashval,add,cmpfcn, strg) \
+  HASH_ADD_KEYPTR_BYHASHVALUE_INORDER(hh, head, &((add)->fieldname), keylen_in, hashval, add, cmpfcn, strg)
 
 #define HASH_ADD_INORDER(hh,head,fieldname,keylen_in,add,cmpfcn)                 \
-  HASH_ADD_KEYPTR_INORDER(hh, head, &((add)->fieldname), keylen_in, add, cmpfcn)
+  HASH_ADD_KEYPTR_INORDER(hh, head, &((add)->fieldname), keylen_in, add, cmpfcn, strg)
 
-#define HASH_ADD_KEYPTR_BYHASHVALUE(hh,head,keyptr,keylen_in,hashval,add)        \
+#define HASH_ADD_KEYPTR_BYHASHVALUE(hh,head,keyptr,keylen_in,hashval,add,strg)        \
 do {                                                                             \
   unsigned _ha_bkt;                                                              \
   (add)->hh.hashv = (hashval);                                                   \
@@ -324,7 +326,7 @@ do {                                                                            
     (add)->hh.next = NULL;                                                       \
     (add)->hh.prev = NULL;                                                       \
     (head) = (add);                                                              \
-    HASH_MAKE_TABLE(hh, head);                                                   \
+    HASH_MAKE_TABLE(hh, head, strg);                                                   \
   } else {                                                                       \
     (add)->hh.tbl = (head)->hh.tbl;                                              \
     HASH_APPEND_LIST(hh, head, add);                                             \
@@ -337,18 +339,18 @@ do {                                                                            
   HASH_FSCK(hh, head, "HASH_ADD_KEYPTR_BYHASHVALUE");                            \
 } while (0)
 
-#define HASH_ADD_KEYPTR(hh,head,keyptr,keylen_in,add)                            \
+#define HASH_ADD_KEYPTR(hh,head,keyptr,keylen_in,add,strg)                            \
 do {                                                                             \
   unsigned _ha_hashv;                                                            \
   HASH_VALUE(keyptr, keylen_in, _ha_hashv);                                      \
-  HASH_ADD_KEYPTR_BYHASHVALUE(hh, head, keyptr, keylen_in, _ha_hashv, add);      \
+  HASH_ADD_KEYPTR_BYHASHVALUE(hh, head, keyptr, keylen_in, _ha_hashv, add, strg);      \
 } while (0)
 
-#define HASH_ADD_BYHASHVALUE(hh,head,fieldname,keylen_in,hashval,add)            \
-  HASH_ADD_KEYPTR_BYHASHVALUE(hh, head, &((add)->fieldname), keylen_in, hashval, add)
+#define HASH_ADD_BYHASHVALUE(hh,head,fieldname,keylen_in,hashval,add,strg)            \
+  HASH_ADD_KEYPTR_BYHASHVALUE(hh, head, &((add)->fieldname), keylen_in, hashval, add, strg)
 
-#define HASH_ADD(hh,head,fieldname,keylen_in,add)                                \
-  HASH_ADD_KEYPTR(hh, head, &((add)->fieldname), keylen_in, add)
+#define HASH_ADD(hh,head,fieldname,keylen_in,add,strg)                                \
+  HASH_ADD_KEYPTR(hh, head, &((add)->fieldname), keylen_in, add, strg)
 
 #define HASH_TO_BKT(hashv,num_bkts,bkt)                                          \
 do {                                                                             \
@@ -375,9 +377,9 @@ do {                                                                            
   struct UT_hash_handle *_hd_hh_del = (delptrhh);                                \
   if ((_hd_hh_del->prev == NULL) && (_hd_hh_del->next == NULL)) {                \
     HASH_BLOOM_FREE((head)->hh.tbl);                                             \
-    uthash_free((head)->hh.tbl->buckets,                                         \
+    uthash_free((head)->hh.tbl.srorage, (head)->hh.tbl->buckets,                                         \
                 (head)->hh.tbl->num_buckets * sizeof(struct UT_hash_bucket));    \
-    uthash_free((head)->hh.tbl, sizeof(UT_hash_table));                          \
+    uthash_free((head)->hh.tbl.srorage, (head)->hh.tbl, sizeof(UT_hash_table));                          \
     (head) = NULL;                                                               \
   } else {                                                                       \
     unsigned _hd_bkt;                                                            \
@@ -403,20 +405,20 @@ do {                                                                            
 /* convenience forms of HASH_FIND/HASH_ADD/HASH_DEL */
 #define HASH_FIND_STR(head,findstr,out)                                          \
     HASH_FIND(hh,head,findstr,(unsigned)uthash_strlen(findstr),out)
-#define HASH_ADD_STR(head,strfield,add)                                          \
-    HASH_ADD(hh,head,strfield[0],(unsigned)uthash_strlen(add->strfield),add)
+#define HASH_ADD_STR(head,strfield,add,strg)                                          \
+    HASH_ADD(hh,head,strfield[0],(unsigned)uthash_strlen(add->strfield),add,strg)
 #define HASH_REPLACE_STR(head,strfield,add,replaced)                             \
     HASH_REPLACE(hh,head,strfield[0],(unsigned)uthash_strlen(add->strfield),add,replaced)
 #define HASH_FIND_INT(head,findint,out)                                          \
     HASH_FIND(hh,head,findint,sizeof(int),out)
-#define HASH_ADD_INT(head,intfield,add)                                          \
-    HASH_ADD(hh,head,intfield,sizeof(int),add)
+#define HASH_ADD_INT(head,intfield,add,strg)                                          \
+    HASH_ADD(hh,head,intfield,sizeof(int),add,strg)
 #define HASH_REPLACE_INT(head,intfield,add,replaced)                             \
     HASH_REPLACE(hh,head,intfield,sizeof(int),add,replaced)
 #define HASH_FIND_PTR(head,findptr,out)                                          \
     HASH_FIND(hh,head,findptr,sizeof(void *),out)
-#define HASH_ADD_PTR(head,ptrfield,add)                                          \
-    HASH_ADD(hh,head,ptrfield,sizeof(void *),add)
+#define HASH_ADD_PTR(head,ptrfield,add,strg)                                          \
+    HASH_ADD(hh,head,ptrfield,sizeof(void *),add,strg)
 #define HASH_REPLACE_PTR(head,ptrfield,add,replaced)                             \
     HASH_REPLACE(hh,head,ptrfield,sizeof(void *),add,replaced)
 #define HASH_DEL(head,delptr)                                                    \
@@ -828,7 +830,7 @@ do {                                                                            
   unsigned _he_bkt_i;                                                            \
   struct UT_hash_handle *_he_thh, *_he_hh_nxt;                                   \
   UT_hash_bucket *_he_new_buckets, *_he_newbkt;                                  \
-  _he_new_buckets = (UT_hash_bucket*)uthash_malloc(                              \
+  _he_new_buckets = (UT_hash_bucket*)uthash_malloc((tbl)->storage,                              \
            2UL * (tbl)->num_buckets * sizeof(struct UT_hash_bucket));            \
   if (!_he_new_buckets) {                                                        \
     uthash_fatal("out of memory");                                               \
@@ -858,7 +860,7 @@ do {                                                                            
       _he_thh = _he_hh_nxt;                                                      \
     }                                                                            \
   }                                                                              \
-  uthash_free((tbl)->buckets, (tbl)->num_buckets * sizeof(struct UT_hash_bucket)); \
+  uthash_free((tbl)->storage, (tbl)->buckets, (tbl)->num_buckets * sizeof(struct UT_hash_bucket)); \
   (tbl)->num_buckets *= 2U;                                                      \
   (tbl)->log2_num_buckets++;                                                     \
   (tbl)->buckets = _he_new_buckets;                                              \
@@ -1010,9 +1012,9 @@ do {                                                                            
 do {                                                                             \
   if ((head) != NULL) {                                                          \
     HASH_BLOOM_FREE((head)->hh.tbl);                                             \
-    uthash_free((head)->hh.tbl->buckets,                                         \
+    uthash_free((head)->hh.tbl->storage, (head)->hh.tbl->buckets,                                         \
                 (head)->hh.tbl->num_buckets*sizeof(struct UT_hash_bucket));      \
-    uthash_free((head)->hh.tbl, sizeof(UT_hash_table));                          \
+    uthash_free((head)->hh.tbl->storage,(head)->hh.tbl, sizeof(UT_hash_table));                          \
     (head) = NULL;                                                               \
   }                                                                              \
 } while (0)
@@ -1092,6 +1094,7 @@ typedef struct UT_hash_table {
    uint8_t *bloom_bv;
    uint8_t bloom_nbits;
 #endif
+   void *storage;
 
 } UT_hash_table;
 
