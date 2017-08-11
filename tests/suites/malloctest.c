@@ -28,6 +28,19 @@ TEST_FUNCT(brp_malloc_1) {
 
 }
 
+TEST_FUNCT(brp_malloc_reinit_1) {
+	char testdata[1000] = { 0 };
+	char alloc_buffer[100] = { 0 };
+	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 1000), 0);
+	CU_ASSERT_PTR_NULL(brp_get_next_elem_1((void * )testdata));
+	char *ptr = (char *) brp_malloc_1((void *) testdata, 10);
+	CU_ASSERT_PTR_NOT_NULL(ptr);
+	CU_ASSERT_EQUAL(brp_malloc_init_1(testdata, 500), 0);
+	ptr = (char *) brp_malloc_1((void *) testdata, 10);
+	brp_return_allocation_picture_1((void *) testdata, alloc_buffer, 100);
+	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UUF");
+}
+
 TEST_FUNCT(brp_free_1) {
 	char testdata[1000] = { 0 };
 	dataChunk *chunk = NULL;
@@ -378,6 +391,7 @@ void runSuite(void) {
 		ADD_SUITE_TEST(suite, brp_malloc_init_1);
 		ADD_SUITE_TEST(suite, brp_malloc_init_small_1);
 		ADD_SUITE_TEST(suite, brp_malloc_1);
+		ADD_SUITE_TEST(suite, brp_malloc_reinit_1);
 		ADD_SUITE_TEST(suite, brp_free_1);
 		ADD_SUITE_TEST(suite, brp_malloc_size_1);
 		ADD_SUITE_TEST(suite, brp_malloc_malloc_free_large_1);

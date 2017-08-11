@@ -144,14 +144,16 @@ int brp_malloc_init_1(void *array_ptr, long array_size, int allocalg) {
 		unlock();
 		return -1;
 	}
-	brp_zero_mem(array_ptr, array_size);
 	globalDataStorage *storage = (globalDataStorage *) array_ptr;
-	storage->array_size = array_size;
-	storage->next_elem = NULL;
-	storage->allocalg = allocalg;
-	storage->sign = S_SIGN;
-	storage->pointers_table = NULL;
-	storage->max_number_of_pointers = 0;
+	if (storage->sign != S_SIGN) {
+		brp_zero_mem(array_ptr, array_size);
+		storage->array_size = array_size;
+		storage->next_elem = NULL;
+		storage->allocalg = allocalg;
+		storage->sign = S_SIGN;
+		storage->pointers_table = NULL;
+		storage->max_number_of_pointers = 0;
+	}
 	unlock();
 	return 0;
 }
@@ -230,7 +232,9 @@ static void *brp_malloc_internal(void *storage, long size, int need_lock) {
 			return NULL;
 		}
 	} else {
-		if (size == (ds->array_size - sizeof(globalDataStorage))) {
+		if (size
+				== (ds->array_size - sizeof(globalDataStorage)
+						- sizeof(dataChunk))) {
 			char *ptr = ((char *) storage + sizeof(globalDataStorage));
 			dataChunk *ch_ptr = (dataChunk *) ptr;
 			brp_set_sign(ch_ptr);
@@ -242,7 +246,9 @@ static void *brp_malloc_internal(void *storage, long size, int need_lock) {
 				unlock();
 			}
 			return ptr;
-		} else if (size > (ds->array_size - sizeof(globalDataStorage))) {
+		} else if (size
+				> (ds->array_size - sizeof(globalDataStorage)
+						- sizeof(dataChunk))) {
 			if (need_lock) {
 				unlock();
 			}
@@ -635,12 +641,12 @@ void *brp_get_pointer_with_number_1(void *storage, int pointer_number) {
 	return NULL;
 }
 
-void brp_set_pointer_to_number_1(void *storage, int pointer_number, void *value){
+void brp_set_pointer_to_number_1(void *storage, int pointer_number, void *value) {
 	lock();
-		globalDataStorage *ds = brp_get_storage_ptr(storage);
-		if (ds->pointers_table && (pointer_number < ds->max_number_of_pointers)) {
-			ds->pointers_table[pointer_number] = value;
-		}
-		unlock();
+	globalDataStorage *ds = brp_get_storage_ptr(storage);
+	if (ds->pointers_table && (pointer_number < ds->max_number_of_pointers)) {
+		ds->pointers_table[pointer_number] = value;
+	}
+	unlock();
 }
 
