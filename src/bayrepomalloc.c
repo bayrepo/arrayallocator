@@ -10,10 +10,14 @@
 #include "bayreposbrk.h"
 #include "bayrepomalloc.h"
 
-int brp_malloc_init(void *array_ptr, long array_size) {
+int brp_malloc_init2(void *array_ptr, long array_size) {
+	return brp_malloc_init_1(array_ptr, array_size, 0);
+}
+
+int brp_malloc_init3(void *array_ptr, long array_size, char *_allocalg) {
 	int allocalg = 0;
-	if (!strcmp(getenv("ALLOCALG") ? getenv("ALLOCALG") : "", "SBRK")
-			|| !strcmp(getenv("ALLOCALG") ? getenv("ALLOCALG") : "", "sbrk")) {
+	if (!strcmp(_allocalg ? _allocalg : "", "SBRK")
+			|| !strcmp(_allocalg ? _allocalg : "", "sbrk")) {
 		allocalg = 0;
 	}
 	switch (allocalg) {

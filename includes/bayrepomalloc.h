@@ -1,8 +1,19 @@
 #ifndef __BAYREPOMALLOC_H__
 #define __BAYREPOMALLOC_H__
 
+#define COUNT_PARMS2(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _, ...) _
+#define COUNT_PARMS(...)\
+	COUNT_PARMS2(__VA_ARGS__, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+
+#define CAT(A, B) CAT2(A, B)
+#define CAT2(A, B) A ## B
+
+#define brp_malloc_init(...)\
+	CAT(brp_malloc_init, COUNT_PARMS(__VA_ARGS__))(__VA_ARGS__)
+
 //Эти функции должны присуствовать во всех алгоритмах
-int brp_malloc_init(void *array_ptr, long array_size);
+int brp_malloc_init2(void *array_ptr, long array_size);
+int brp_malloc_init3(void *array_ptr, long array_size, char *_allocalg);
 void *brp_malloc(void *storage, long size);
 void brp_free(void *storage, void *ptr);
 void *brp_realloc(void *storage, void *ptr, long new_size);

@@ -180,12 +180,12 @@ do {                                                                            
 
 #define HASH_MAKE_TABLE(hh,head,strg)                                                 \
 do {                                                                             \
-  (head)->hh.tbl->storage = strg   ;                                              \
-  (head)->hh.tbl = (UT_hash_table*)uthash_malloc((head)->hh.tbl->storage, sizeof(UT_hash_table));         \
+  (head)->hh.tbl = (UT_hash_table*)uthash_malloc(strg, sizeof(UT_hash_table));         \
   if (!(head)->hh.tbl) {                                                         \
     uthash_fatal("out of memory");                                               \
   }                                                                              \
   uthash_bzero((head)->hh.tbl, sizeof(UT_hash_table));                           \
+  (head)->hh.tbl->storage = strg   ;                                              \
   (head)->hh.tbl->tail = &((head)->hh);                                          \
   (head)->hh.tbl->num_buckets = HASH_INITIAL_NUM_BUCKETS;                        \
   (head)->hh.tbl->log2_num_buckets = HASH_INITIAL_NUM_BUCKETS_LOG2;              \
@@ -377,9 +377,9 @@ do {                                                                            
   struct UT_hash_handle *_hd_hh_del = (delptrhh);                                \
   if ((_hd_hh_del->prev == NULL) && (_hd_hh_del->next == NULL)) {                \
     HASH_BLOOM_FREE((head)->hh.tbl);                                             \
-    uthash_free((head)->hh.tbl.srorage, (head)->hh.tbl->buckets,                                         \
+    uthash_free((head)->hh.tbl->storage, (head)->hh.tbl->buckets,                                         \
                 (head)->hh.tbl->num_buckets * sizeof(struct UT_hash_bucket));    \
-    uthash_free((head)->hh.tbl.srorage, (head)->hh.tbl, sizeof(UT_hash_table));                          \
+    uthash_free((head)->hh.tbl->storage, (head)->hh.tbl, sizeof(UT_hash_table));                          \
     (head) = NULL;                                                               \
   } else {                                                                       \
     unsigned _hd_bkt;                                                            \
