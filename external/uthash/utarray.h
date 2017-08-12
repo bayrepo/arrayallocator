@@ -236,7 +236,7 @@ static void utarray_str_dtor(void *elt, void *storage) {
 	if (*eltc != NULL)
 		brp_free(storage, *eltc);
 }
-static const UT_icd ut_str_icdd UTARRAY_UNUSED = { sizeof(char*), NULL,
+static const UT_icd ut_str_icd UTARRAY_UNUSED = { sizeof(char*), NULL,
 		utarray_str_cpy, utarray_str_dtor };
 static const UT_icd ut_int_icd UTARRAY_UNUSED
 = { sizeof(int), NULL, NULL, NULL };
