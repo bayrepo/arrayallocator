@@ -1,3 +1,7 @@
+/*
+ * URL: https://habrahabr.ru/post/123344/
+ */
+
 #ifndef __UTILS_H__
 #define __UTILS_H__
 

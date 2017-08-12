@@ -1,3 +1,7 @@
+/*
+ * URL: https://habrahabr.ru/post/123344/
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
