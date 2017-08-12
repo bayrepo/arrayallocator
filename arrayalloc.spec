@@ -12,7 +12,7 @@ URL:            https://github.com/bayrepo/arrayallocator
 Source0:        %{name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:  CUnit-devel cmake >= 2.8
+BuildRequires:  CUnit-devel cmake >= 2.6
 
 %description
 Package contains the library with alternative malloc wich can allocate memory from pre-allocated array.
