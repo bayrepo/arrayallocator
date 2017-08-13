@@ -39,7 +39,7 @@ SOFTWARE.
 
 typedef struct __attribute__((__packed__)) __dataChunk {
 	char sign[2];  //'BR'
-	long size;
+	unsigned long size;
 	char status;
 } dataChunk;
 
