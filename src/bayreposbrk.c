@@ -94,7 +94,7 @@ static inline int brp_is_end_chank(globalDataStorage *storage, dataChunk *ptr) {
 	char *next_elem_propose = (char *) ptr + sizeof(dataChunk) + ptr->size;
 	if (next_elem_propose >= end_of_array
 			|| next_elem_propose < (char *) storage) {
-		return 1;
+		return 2;
 	} else if ((end_of_array - next_elem_propose) < (sizeof(dataChunk) + 1)) {
 		return 1;
 	} else if (brp_set_is_sign((dataChunk *) next_elem_propose)) {
@@ -118,17 +118,24 @@ static inline void brp_try_concat_next(globalDataStorage *storage,
 		dataChunk *ptr) {
 	dataChunk *ptr_old = ptr;
 	if (ptr->status == C_FREE) {
-		while (!brp_is_end_chank(storage, ptr)) {
+		while (1) {
+			int end_chunk = brp_is_end_chank(storage, ptr);
+			if (end_chunk) {
+				if ((ptr != ptr_old) && (ptr->status == C_FREE)
+						&& (end_chunk != 2)) {
+					ptr_old->size += ptr->size + sizeof(dataChunk);
+				}
+				break;
+			}
+
 			ptr = brp_find_next_elem(storage, ptr);
 			if (ptr->status == C_FREE) {
-				dataChunk *ptr_next = (dataChunk *) ((char *) ptr
-						+ sizeof(dataChunk) + ptr->size);
-				ptr_old->size = ptr->size + sizeof(dataChunk);
-				ptr = ptr_next;
+				ptr_old->size += ptr->size + sizeof(dataChunk);
 			} else {
 				break;
 			}
 		}
+
 	}
 }
 
