@@ -11,6 +11,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/includes)
 
 add_subdirectory (tests) 
 add_subdirectory (src)
+add_subdirectory (examples)
 
 file(GLOB HEADERS includes/bayrepomalloc.h includes/bayrepostrings.h external/uthash/*.h)
 install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})

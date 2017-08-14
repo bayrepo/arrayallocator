@@ -12,8 +12,6 @@ FILE(GLOB C_FILES RELATIVE "${CMAKE_SOURCE_DIR}/tests/suites" "${CMAKE_SOURCE_DI
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}/../../includes" 
 "${CMAKE_CURRENT_SOURCE_DIR}/../" ${CMAKE_CURRENT_SOURCE_DIR}/../../external/uthash)
 
-MESSAGE(STATUS "FFF: ${CMAKE_CURRENT_SOURCE_DIR}")
-
 FOREACH ( module ${C_FILES} )
     STRING( REGEX REPLACE ".c$" "" module "${module}" )
     MESSAGE(STATUS "Found test suite: ${module}")
