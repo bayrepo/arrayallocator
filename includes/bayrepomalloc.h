@@ -55,6 +55,7 @@ void brp_return_allocation_stdout(void *storage);
 int brp_make_pointers_table(void *storage, int pointers_number);
 void *brp_get_pointer_with_number(void *storage, int pointer_number);
 void brp_set_pointer_to_number(void *storage, int pointer_number, void *value);
+long brp_get_region_size(void *storage);
 //Конец обязательных функций
 
 #include "bayrepostrings.h"

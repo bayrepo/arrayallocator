@@ -74,4 +74,6 @@ int brp_make_pointers_table_1(void *storage, int pointers_number);
 void *brp_get_pointer_with_number_1(void *storage, int pointer_number);
 void brp_set_pointer_to_number_1(void *storage, int pointer_number, void *value);
 
+long brp_get_region_size_1(void *array_ptr);
+
 #endif /* INCLUDES_BAYREPOSBRK_H_ */

@@ -224,3 +224,15 @@ void brp_set_pointer_to_number(void *storage, int pointer_number, void *value) {
 	}
 	}
 }
+
+long brp_get_region_size(void *storage){
+	switch (brp_get_alloc_alg(storage)) {
+	case 0:
+		return brp_get_region_size_1(storage);
+	default: {
+		fprintf(stderr,
+				"brp_set_pointer_to_number was used without init of array\n");
+		return 0;
+	}
+	}
+}

@@ -15,6 +15,7 @@
 #define ADD_SUITE_TEST(suite, name) \
     if ((NULL == CU_add_test(suite, #name, (CU_TestFunc)test_##name))) {\
         CU_cleanup_registry();\
+        exit(EXIT_FAILURE); \
         return;\
     }\
 
