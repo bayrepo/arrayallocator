@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 
 project(bayrepo)
 
+#set(CMAKE_BUILD_TYPE Debug)
 
 IF(NOT DEFINED CMAKE_BUILD_TYPE)
    SET(CMAKE_BUILD_TYPE Release)

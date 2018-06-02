@@ -30,49 +30,102 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <string.h>
 #include "bayrepomalloc.h"
-
-union brp_dump_Data {
-   char dt;
-   long offset;
-   void *addr;
-};
-
-FILE *brp_file_open(char *file_name) {
-	FILE *fp = fopen(file_name, "wb");
-	if (fp) {
-		char addr_size = sizeof(void *);
-		fwrite(&addr_size, sizeof(char), 1, fp);
-	}
-	return fp;
-}
-
-int brp_write_one_byte(FILE *fp, char data){
-
-}
+#include "bayrepodump.h"
 
 int brp_dump_area(void *storage, char *file_dump) {
-	FILE fp = brp_file_open(file_dump);
-	if (!fp) return 0;
 	long size_of_storage = brp_get_region_size(storage);
 	if (size_of_storage) {
-		char *pointer = (char *) storage;
-		char *endptr = pointer + size_of_storage;
-		int addr_size = sizeof(void *);
-		while (pointer < endptr) {
-			if ((pointer + addr_size) <= endptr) {
-				void *addr = (void *) pointer;
-				if ((*addr >= storage) && (*addr <= endptr)) {
-					//write offset
-					pointer += addr_size;
-				} else {
-					//Write byte
-					pointer++;
-				}
-			} else {
-				//Write byte to file
-				pointer++;
-			}
+		int fd = open(file_dump, O_RDWR | O_CREAT | O_TRUNC, (mode_t) 0600);
+
+		if (fd == -1) {
+			return -1;
+		}
+
+		if (lseek(fd, size_of_storage - 1, SEEK_SET) == -1) {
+			close(fd);
+			return -2;
+		}
+		if (write(fd, "", 1) == -1) {
+			close(fd);
+			return -3;
+		}
+
+		char *map = mmap(0, size_of_storage, PROT_READ | PROT_WRITE, MAP_SHARED,
+				fd, 0);
+		if (map == MAP_FAILED) {
+			close(fd);
+			return -4;
+		}
+		char *c_storage = (char *) storage;
+		size_t i = 0;
+		for (i = 0; i < size_of_storage; i++) {
+			map[i] = c_storage[i];
+		}
+
+		if (msync(map, size_of_storage, MS_SYNC) == -1) {
+			perror("Could not sync the file to disk");
+		}
+
+		if (munmap(map, size_of_storage) == -1) {
+			close(fd);
+			return -5;
+		}
+
+		close(fd);
+
+		return 0;
+
+	}
+	return 0;
+}
+
+char *brp_restore_dump(char *file_dump) {
+	int fd = open(file_dump, O_RDONLY, (mode_t) 0600);
+
+	if (fd == -1) {
+		return NULL;
+	}
+
+	struct stat fileInfo = { 0 };
+
+	if (fstat(fd, &fileInfo) == -1) {
+		return NULL;
+	}
+
+	if (fileInfo.st_size == 0) {
+		return NULL;
+	}
+
+	char *map = mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	if (map == MAP_FAILED) {
+		close(fd);
+		return NULL;
+	}
+
+	char *data = calloc(1, fileInfo.st_size);
+
+	if (data) {
+		off_t i = 0;
+		for (i = 0; i < fileInfo.st_size; i++) {
+			data[i] = map[i];
 		}
 	}
+
+	if (munmap(map, fileInfo.st_size) == -1) {
+		close(fd);
+		if (data)
+			free(data);
+		return NULL;
+	}
+
+	close(fd);
+
+	return data;
 }

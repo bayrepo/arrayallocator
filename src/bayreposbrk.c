@@ -707,7 +707,7 @@ void brp_set_pointer_to_number_1(void *storage, int pointer_number, void *value)
 
 long brp_get_region_size_1(void *array_ptr){
 	globalDataStorage *storage = (globalDataStorage *) array_ptr;
-	if (storage->sign != S_SIGN) {
+	if (storage->sign == S_SIGN) {
 		return storage->array_size;
 	}
 	return 0;
