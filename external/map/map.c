@@ -156,7 +156,7 @@ int brp_map_set_(brp_map_base_t *m, const char *key, void *value, int vsize, voi
 
 void brp_map_remove_(brp_map_base_t *m, const char *key, void *storage) {
 	brp_map_node_t *node;
-	brp_map_node_t **next = map_getref(m, key, storage);
+	brp_map_node_t **next = brp_map_getref(m, key, storage);
 	if (next) {
 		node = *next;
 		*next = (*next)->next;
