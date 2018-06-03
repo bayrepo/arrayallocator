@@ -32,38 +32,51 @@
 #include "bayreposbrk.h"
 #include "bayrepostrings.h"
 #include "bayrepodump.h"
+#include "map.h"
 
-TEST_FUNCT(brp_dump_test_1) {
-	char testdata[200] = { 0 };
-	CU_ASSERT_EQUAL(brp_malloc_init(testdata, 200), 0);
-	brp_make_pointers_table(testdata, 2);
-	char *data = brp_malloc(testdata, 10);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(data);
-	memset(data, 0, 10);
-	strcpy(data, "test1");
-	brp_set_pointer_to_number(testdata, 0, data);
-	data = brp_malloc(testdata, 10);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(data);
-	memset(data, 0, 10);
-	strcpy(data, "test2");
-	brp_set_pointer_to_number(testdata, 1, data);
-	int result = brp_dump_area((void *) testdata, "unit1.bin");
+TEST_FUNCT(brp_map_test_init) {
+	char testdata[1024] = { 0 };
+	CU_ASSERT_EQUAL(brp_malloc_init(testdata, 1024), 0);
+	brp_map_int_t *m = brp_malloc(testdata, sizeof(brp_map_int_t));
+	CU_ASSERT_PTR_NOT_NULL_FATAL(m);
+	brp_map_init(m, testdata);
+	brp_map_set(m, "test1", 1, testdata);
+	brp_map_set(m, "test2", 10, testdata);
+	brp_map_set(m, "test3", 100, testdata);
+	int *val = brp_map_get(m, "test2", testdata);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(val);
+	CU_ASSERT_EQUAL(*val, 10);
+	brp_make_pointers_table(testdata, 1);
+	brp_set_pointer_to_number(testdata, 0, m);
+	int result = brp_dump_area((void *) testdata, "unit2.bin");
 	CU_ASSERT_EQUAL(result, 0);
-	char *newarena = brp_restore_dump("unit1.bin");
+}
+
+TEST_FUNCT(brp_map_test_read) {
+	char testdata[1024] = { 0 };
+	CU_ASSERT_EQUAL(brp_malloc_init(testdata, 1024), 0);
+	char *newarena = brp_restore_dump("unit2.bin");
 	CU_ASSERT_PTR_NOT_NULL_FATAL(newarena);
-	char *newd = brp_get_pointer_with_number(newarena, 0);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(newd);
-	CU_ASSERT_STRING_EQUAL_FATAL(newd, "test1");
-	newd = brp_get_pointer_with_number(newarena, 1);
-	CU_ASSERT_PTR_NOT_NULL_FATAL(newd);
-	CU_ASSERT_STRING_EQUAL_FATAL(newd, "test2");
+	brp_map_int_t *m = brp_get_pointer_with_number(newarena, 0);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(m);
+	int *val = brp_map_get(m, "test2", testdata);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(val);
+	CU_ASSERT_EQUAL(*val, 10);
+	val = brp_map_get(m, "test1", testdata);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(val);
+	CU_ASSERT_EQUAL(*val, 1);
+	val = brp_map_get(m, "test3", testdata);
+	CU_ASSERT_PTR_NOT_NULL_FATAL(val);
+	CU_ASSERT_EQUAL(*val, 100);
 	free(newarena);
-	unlink("unit1.bin");
+	unlink("unit2.bin");
 }
 
 void runSuite(void) {
-	CU_pSuite suite = CUnitCreateSuite("dump");
+	CU_pSuite suite = CUnitCreateSuite("map test");
 	if (suite) {
-		ADD_SUITE_TEST(suite, brp_dump_test_1);
+		ADD_SUITE_TEST(suite, brp_map_test_init);
+		ADD_SUITE_TEST(suite, brp_map_test_read);
 	}
 }
+

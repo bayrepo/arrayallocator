@@ -36,50 +36,95 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <string.h>
+#include <stdint.h>
 #include "bayrepomalloc.h"
 #include "bayrepodump.h"
+
+typedef union brp_addr_ {
+	char raw[8];
+	uint64_t fulladdr;
+} brp_addr;
+
+typedef struct offsets_ {
+	long pos;
+	long offset;
+} offsets;
+
+static int is_little_endian() {
+	unsigned int i = 1;
+	char *c = (char*) &i;
+	if (*c)
+		return 1;
+	else {
+		return 0;
+	}
+}
+
+static long get_offset(void *ptr, void *begin, void *end, int size) {
+	brp_addr data = { 0 };
+	if (size > 8)
+		return -1;
+	if ((ptr + size) >= end)
+		return -1;
+	if (ptr < begin)
+		return -1;
+	data.fulladdr = 0;
+	int order = is_little_endian();
+	if (order) {
+		int i = 0;
+		for (i = 0; i < size; i++) {
+			char *p = (char *) ptr;
+			data.raw[i] = *(p + i);
+		}
+	} else {
+		int i = 0;
+		for (i = 8 - size; i < 8; i++) {
+			char *p = (char *) ptr;
+			data.raw[i] = *(p + i);
+		}
+	}
+	void *tmp = (void *) data.fulladdr;
+	if ((tmp >= begin) && (tmp < end)) {
+		return tmp - begin;
+	}
+	return -1;
+}
 
 int brp_dump_area(void *storage, char *file_dump) {
 	long size_of_storage = brp_get_region_size(storage);
 	if (size_of_storage) {
-		int fd = open(file_dump, O_RDWR | O_CREAT | O_TRUNC, (mode_t) 0600);
-
-		if (fd == -1) {
+		FILE *fp = fopen(file_dump, "wb");
+		if (!fp)
 			return -1;
-		}
-
-		if (lseek(fd, size_of_storage - 1, SEEK_SET) == -1) {
-			close(fd);
-			return -2;
-		}
-		if (write(fd, "", 1) == -1) {
-			close(fd);
-			return -3;
-		}
-
-		char *map = mmap(0, size_of_storage, PROT_READ | PROT_WRITE, MAP_SHARED,
-				fd, 0);
-		if (map == MAP_FAILED) {
-			close(fd);
-			return -4;
-		}
+		fwrite(&size_of_storage, sizeof(long), 1, fp);
 		char *c_storage = (char *) storage;
 		size_t i = 0;
+		int sz_of_addr = sizeof(void *);
+		long offsets_counter = 0;
 		for (i = 0; i < size_of_storage; i++) {
-			map[i] = c_storage[i];
+			void *addr = (void *) (c_storage + i);
+			long offset = get_offset(addr, storage,
+					(void *) (c_storage + size_of_storage), sz_of_addr);
+			if (offset >= 0)
+				offsets_counter++;
+		}
+		fwrite(&offsets_counter, sizeof(long), 1, fp);
+		for (i = 0; i < size_of_storage; i++) {
+			void *addr = (void *) (c_storage + i);
+			long offset = get_offset(addr, storage,
+					(void *) (c_storage + size_of_storage), sz_of_addr);
+			if (offset >= 0) {
+				offsets of;
+				of.offset = offset;
+				of.pos = i;
+				fwrite(&of, sizeof(of), 1, fp);
+			}
+		}
+		for (i = 0; i < size_of_storage; i++) {
+			fwrite((void *) &c_storage[i], sizeof(char), 1, fp);
 		}
 
-		if (msync(map, size_of_storage, MS_SYNC) == -1) {
-			perror("Could not sync the file to disk");
-		}
-
-		if (munmap(map, size_of_storage) == -1) {
-			close(fd);
-			return -5;
-		}
-
-		close(fd);
-
+		fclose(fp);
 		return 0;
 
 	}
@@ -87,45 +132,45 @@ int brp_dump_area(void *storage, char *file_dump) {
 }
 
 char *brp_restore_dump(char *file_dump) {
-	int fd = open(file_dump, O_RDONLY, (mode_t) 0600);
-
-	if (fd == -1) {
+	FILE *fp = fopen(file_dump, "rb");
+	if (!fp)
+		return NULL;
+	long size_of_storage = 0;
+	fread(&size_of_storage, sizeof(long), 1, fp);
+	if (!size_of_storage) {
+		fclose(fp);
 		return NULL;
 	}
+	long numb_offs = 0;
+	fread(&numb_offs, sizeof(long), 1, fp);
+	fseek(fp, numb_offs * sizeof(offsets), SEEK_CUR);
 
-	struct stat fileInfo = { 0 };
+	char *data = calloc(1, size_of_storage);
 
-	if (fstat(fd, &fileInfo) == -1) {
-		return NULL;
-	}
+	fread(data, sizeof(char), size_of_storage, fp);
 
-	if (fileInfo.st_size == 0) {
-		return NULL;
-	}
+	fseek(fp, 2 * sizeof(long), SEEK_SET);
 
-	char *map = mmap(0, fileInfo.st_size, PROT_READ, MAP_SHARED, fd, 0);
-	if (map == MAP_FAILED) {
-		close(fd);
-		return NULL;
-	}
-
-	char *data = calloc(1, fileInfo.st_size);
-
-	if (data) {
-		off_t i = 0;
-		for (i = 0; i < fileInfo.st_size; i++) {
-			data[i] = map[i];
+	int i = 0;
+	for (i = 0; i < numb_offs; i++) {
+		offsets of;
+		fread(&of, sizeof(offsets), 1, fp);
+		brp_addr addr;
+		addr.fulladdr = data + of.offset;
+		if (is_little_endian()) {
+			int j = 0;
+			for (j = 0; j < sizeof(void *); j++) {
+				*(data + of.pos + j) = addr.raw[j];
+			}
+		} else {
+			int j = 0;
+			for (j = 8 - sizeof(void *); j < sizeof(void *); j++) {
+				*(data + of.pos + j - (8 - sizeof(void *))) = addr.raw[j];
+			}
 		}
 	}
 
-	if (munmap(map, fileInfo.st_size) == -1) {
-		close(fd);
-		if (data)
-			free(data);
-		return NULL;
-	}
-
-	close(fd);
+	fclose(fp);
 
 	return data;
 }

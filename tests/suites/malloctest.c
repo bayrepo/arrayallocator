@@ -356,11 +356,11 @@ TEST_FUNCT(brp_check_concat_1) {
 	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UUFF");
 	ptr = (char *) brp_malloc_1((void *) testdata, 15);
 	brp_return_allocation_picture_1((void *) testdata, alloc_buffer, 100);
-	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UUU");
+	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UUUF");
 	CU_ASSERT_PTR_NOT_NULL_FATAL(ptr);
 	ptr = (char *) brp_malloc_1((void *) testdata, 10);
 	brp_return_allocation_picture_1((void *) testdata, alloc_buffer, 100);
-	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UUU");
+	CU_ASSERT_STRING_EQUAL_FATAL(alloc_buffer, "UUUF");
 	CU_ASSERT_PTR_NULL_FATAL(ptr);
 
 }
