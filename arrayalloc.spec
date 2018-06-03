@@ -1,5 +1,5 @@
-%define version 0.1
-%define release 2.alpha
+%define version 0.2
+%define release 1.alpha
 
 
 Name:           inarray-allocator
@@ -49,6 +49,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_sysconfdir}/ld.so.conf.d/
 mkdir -p $RPM_BUILD_ROOT/%{_datarootdir}/bayrepo
 install -m 644 -D allocator.conf $RPM_BUILD_ROOT/%{_sysconfdir}/ld.so.conf.d/
 install -m 644 -D LICENSE $RPM_BUILD_ROOT/%{_datarootdir}/bayrepo/
+install -m 644 -D external/map/map.h $RPM_BUILD_ROOT/%{_includedir}/bayrepo/brp_map.h
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -71,5 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/bayrepo/*
 
 %changelog
+* Sun Jun 03 2018 Alexey Berezhok <bayrepo.info@gmail.com> 0.2-1.alpha
+- Added support new map
+
 * Sun Aug 13 2017 Alexey Berezhok <bayrepo.info@gmail.com> 0.1-1.alpha
 - Initial commit
