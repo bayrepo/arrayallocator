@@ -1,4 +1,4 @@
-Больше информации: http://bayrepo.net/doku.php?id=ru:inarrayalloc
+Больше информации: http://docs.putey.net/ru/inarrayalloc
 
 Описание
 =====================
