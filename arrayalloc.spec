@@ -1,5 +1,5 @@
 %define version 0.2
-%define release 1.alpha
+%define release 2.alpha
 
 
 Name:           inarray-allocator
@@ -19,7 +19,7 @@ Package contains the library with alternative malloc wich can allocate memory fr
 Library has the ut* utils which extended for use alternative allocator.
 
 %package devel
-Requires: %{name}=%{version}-%{release}
+Requires: %{name} = %{version}-%{release}
 Summary: Headers of uthash, utlist, utarray, utringbuffer and utstring wich allocates data into array.
 
 %description devel
@@ -72,7 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/bayrepo/*
 
 %changelog
-* Sun Jun 03 2018 Alexey Berezhok <bayrepo.info@gmail.com> 0.2-1.alpha
+* Sun Jun 03 2018 Alexey Berezhok <bayrepo.info@gmail.com> 0.2-2.alpha
 - Added support new map
 
 * Sun Aug 13 2017 Alexey Berezhok <bayrepo.info@gmail.com> 0.1-1.alpha
