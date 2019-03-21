@@ -72,7 +72,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/bayrepo/*
 
 %changelog
-* Sun Jun 03 2018 Alexey Berezhok <bayrepo.info@gmail.com> 0.2-2.alpha
+* Fri Mar 22 2019 Alexey Berezhok <bayrepo.info@gmail.com> 0.2-2.alpha
+- Fixed errors of package and find block algo
+
+* Sun Jun 03 2018 Alexey Berezhok <bayrepo.info@gmail.com> 0.2-1.alpha
 - Added support new map
 
 * Sun Aug 13 2017 Alexey Berezhok <bayrepo.info@gmail.com> 0.1-1.alpha

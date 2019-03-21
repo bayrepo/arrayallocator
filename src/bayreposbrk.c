@@ -245,6 +245,7 @@ static void *brp_malloc_internal(void *storage, long size, int need_lock) {
 						if (ch_ptr->size >= size) {
 							retry = 1;
 						}
+						old_ch_ptr = ch_ptr;
 					}
 				}
 				if (!retry) {
@@ -567,6 +568,11 @@ void brp_return_allocation_picture_1(void *storage, char *buffer_for_picture,
 	dataChunk *first_ptr = NULL;
 	dataChunk *next_ptr = NULL;
 	brp_get_next_region_info_internal(storage, NULL, (void **) &first_ptr, 0);
+	if (first_ptr == (void *)1){
+		printf("Incorrect data\n");
+		unlock();
+		return;
+	}
 	while (next_ptr != first_ptr) {
 		if (!next_ptr) {
 			next_ptr = first_ptr;
@@ -594,6 +600,11 @@ void brp_return_allocation_stdout_1(void *storage) {
 	dataChunk *first_ptr = NULL;
 	dataChunk *next_ptr = NULL;
 	brp_get_next_region_info_internal(storage, NULL, (void *) &first_ptr, 0);
+	if (first_ptr == (void *)1){
+		printf("Incorrect data\n");
+		unlock();
+		return;
+	}
 	long sum_size = 0;
 	long chunk_size = 0;
 	while (next_ptr != first_ptr) {
