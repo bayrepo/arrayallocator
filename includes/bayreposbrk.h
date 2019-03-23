@@ -49,6 +49,8 @@ typedef struct __attribute__((__packed__)) __globalDataStorage {
 	long array_size;
 	void *next_elem;
 	void **pointers_table;
+	long allocated_size;
+	long allocated_times;
 	long max_number_of_pointers;
 } globalDataStorage;
 
@@ -75,5 +77,6 @@ void *brp_get_pointer_with_number_1(void *storage, int pointer_number);
 void brp_set_pointer_to_number_1(void *storage, int pointer_number, void *value);
 
 long brp_get_region_size_1(void *array_ptr);
+long brp_summary_allocation_size(void *storage);
 
 #endif /* INCLUDES_BAYREPOSBRK_H_ */

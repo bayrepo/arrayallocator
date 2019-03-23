@@ -114,9 +114,10 @@ static inline void *brp_find_next_elem(globalDataStorage *storage,
 	}
 }
 
-static inline void brp_try_concat_next(globalDataStorage *storage,
+static int brp_try_concat_next(globalDataStorage *storage,
 		dataChunk *ptr) {
 	dataChunk *ptr_old = ptr;
+	char concat = 0;
 	if (ptr->status == C_FREE) {
 		while (1) {
 			int end_chunk = brp_is_end_chank(storage, ptr);
@@ -124,6 +125,7 @@ static inline void brp_try_concat_next(globalDataStorage *storage,
 				if ((ptr != ptr_old) && (ptr->status == C_FREE)
 						&& (end_chunk != 2)) {
 					ptr_old->size += ptr->size + sizeof(dataChunk);
+					concat = 1;
 				}
 				break;
 			}
@@ -131,12 +133,15 @@ static inline void brp_try_concat_next(globalDataStorage *storage,
 			ptr = brp_find_next_elem(storage, ptr);
 			if (ptr->status == C_FREE) {
 				ptr_old->size += ptr->size + sizeof(dataChunk);
+				concat = 1;
 			} else {
 				break;
 			}
 		}
 
 	}
+	if (concat == 0) return 0;
+	else return 1;
 }
 
 static inline void brp_mem_cpy(char *src, char *dst, long size) {
@@ -187,6 +192,8 @@ int brp_malloc_init_1(void *array_ptr, long array_size, int allocalg) {
 		storage->sign = S_SIGN;
 		storage->pointers_table = NULL;
 		storage->max_number_of_pointers = 0;
+		storage->allocated_size = 0;
+		storage->allocated_times = 0;
 	}
 	unlock();
 	return 0;
@@ -201,6 +208,8 @@ static void *brp_malloc_internal(void *storage, long size, int need_lock) {
 		lock();
 	}
 	globalDataStorage *ds = brp_get_storage_ptr(storage);
+	ds->allocated_size += size;
+	ds->allocated_times++;
 	if (ds->next_elem) {
 		dataChunk *ch_ptr = (dataChunk *) ds->next_elem;
 		int correct_elem_found = 0;
@@ -241,11 +250,12 @@ static void *brp_malloc_internal(void *storage, long size, int need_lock) {
 						ds->next_elem = brp_find_next_elem(ds, ch_ptr);
 						found = 1;
 					} else {
-						brp_try_concat_next(ds, ch_ptr);
+						char result_concat = brp_try_concat_next(ds, ch_ptr);
 						if (ch_ptr->size >= size) {
 							retry = 1;
+						}if (result_concat) {
+							old_ch_ptr = ch_ptr;
 						}
-						old_ch_ptr = ch_ptr;
 					}
 				}
 				if (!retry) {
@@ -722,5 +732,14 @@ long brp_get_region_size_1(void *array_ptr){
 		return storage->array_size;
 	}
 	return 0;
+}
+
+long brp_summary_allocation_size(void *storage){
+	lock();
+	globalDataStorage *ds = brp_get_storage_ptr(storage);
+	return (ds->allocated_times + 1) * sizeof(dataChunk)
+			+ ds->allocated_size * sizeof(char)
+			+ sizeof(globalDataStorage);
+	unlock();
 }
 
