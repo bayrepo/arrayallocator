@@ -1,4 +1,4 @@
-Больше информации: http://docs.putey.net/ru/inarrayalloc
+Больше информации: [inarrayalloc](https://brepo.ru/post/inarray-allocator-opisanie)
 
 Описание
 =====================
@@ -27,18 +27,19 @@
 Установка из пакета
 =====================
 
-Последовательность установки CentOS 7:
+Последовательность установки CentOS 9/Rhel 9 based systems:
 
-- wget http://download.opensuse.org/repositories/home:/bayrepo/CentOS_7/home:bayrepo.repo -O /etc/yum.repos.d/home:bayrepo.repo
+```
+echo -e "[repomanager-bayrepo_prod]
+name=bayrepo repo on repo.brepo.ru
+baseurl=https://repo.brepo.ru/repo/bayrepo_prod
+enabled=1
+gpgkey=https://repo.brepo.ru/repo/gpgkeys/repo.brepo.ru.pub
+gpgcheck=1" > /etc/yum.repos.d/repomanager-bayrepo.repo
+```
 - yum install inarray-allocator inarray-allocator-devel -y
 - установка завершена
 
-Последовательность установки CentOS 6:
-
-- wget http://download.opensuse.org/repositories/home:/bayrepo/CentOS_6/home:bayrepo.repo -O /etc/yum.repos.d/home:bayrepo.repo
-- yum install inarray-allocator inarray-allocator-devel -y
-
-установка завершена
 
 Примеры использования
 =====================
